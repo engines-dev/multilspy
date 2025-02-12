@@ -53,6 +53,8 @@ class TypeScriptLanguageServer(LanguageServer):
         valid_platforms = [
             PlatformId.LINUX_x64, 
             PlatformId.LINUX_arm64,
+            PlatformId.LINUX_MUSL_x64,
+            PlatformId.LINUX_MUSL_arm64,
             PlatformId.OSX, 
             PlatformId.OSX_x64,
             PlatformId.OSX_arm64,
