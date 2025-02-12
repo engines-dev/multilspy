@@ -209,7 +209,9 @@ class PlatformUtils:
             platform_id = system_map[system] + "-" + machine_map[machine]
             if system == "Linux" and bitness == "64bit":
                 libc = platform.libc_ver()[0]
-                if libc != 'glibc':
+                if libc == "":
+                    paltform_id = f"{system_map[system]}-musl-{machine_map[machine]}"
+                elif libc != "glibc":
                     platform_id += "-" + libc
             return PlatformId(platform_id)
         else:
