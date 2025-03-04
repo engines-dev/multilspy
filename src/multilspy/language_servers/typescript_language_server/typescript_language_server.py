@@ -61,48 +61,54 @@ class TypeScriptLanguageServer(LanguageServer):
         ] 
         assert platform_id in valid_platforms, f"Platform {platform_id} is not supported for multilspy javascript/typescript at the moment"
 
-        with open(os.path.join(os.path.dirname(__file__), "runtime_dependencies.json"), "r") as f:
-            d = json.load(f)
-            del d["_description"]
+        if (
+            shutil.which("node") is not None
+            and shutil.which("typescript-language-server") is not None
+        ):
+            tsserver_executable_path = shutil.which("typescript-language-server")
+        else:
+            with open(os.path.join(os.path.dirname(__file__), "runtime_dependencies.json"), "r") as f:
+                d = json.load(f)
+                del d["_description"]
 
-        runtime_dependencies = d.get("runtimeDependencies", [])
-        tsserver_ls_dir = os.path.join(os.path.dirname(__file__), "static", "ts-lsp")
-        tsserver_executable_path = os.path.join(tsserver_ls_dir, "typescript-language-server")
+            runtime_dependencies = d.get("runtimeDependencies", [])
+            tsserver_ls_dir = os.path.join(os.path.dirname(__file__), "static", "ts-lsp")
+            tsserver_executable_path = os.path.join(tsserver_ls_dir, "typescript-language-server")
 
-        # Verify both node and npm are installed
-        is_node_installed = shutil.which('node') is not None
-        assert is_node_installed, "node is not installed or isn't in PATH. Please install NodeJS and try again."
-        is_npm_installed = shutil.which('npm') is not None
-        assert is_npm_installed, "npm is not installed or isn't in PATH. Please install npm and try again."
+            # Verify both node and npm are installed
+            is_node_installed = shutil.which('node') is not None
+            assert is_node_installed, "node is not installed or isn't in PATH. Please install NodeJS and try again."
+            is_npm_installed = shutil.which('npm') is not None
+            assert is_npm_installed, "npm is not installed or isn't in PATH. Please install npm and try again."
 
-        # Install typescript and typescript-language-server if not already installed
-        if not os.path.exists(tsserver_ls_dir):
-            os.makedirs(tsserver_ls_dir, exist_ok=True)
-            for dependency in runtime_dependencies:
-                # Windows doesn't support the 'user' parameter and doesn't have pwd module
-                if PlatformUtils.get_platform_id().value.startswith("win"):
-                    subprocess.run(
-                        dependency["command"], 
-                        shell=True, 
-                        check=True, 
-                        cwd=tsserver_ls_dir,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
-                    )
-                else:
-                    # On Unix-like systems, run as non-root user
-                    user = pwd.getpwuid(os.getuid()).pw_name
-                    subprocess.run(
-                        dependency["command"], 
-                        shell=True, 
-                        check=True, 
-                        user=user, 
-                        cwd=tsserver_ls_dir,
-                        stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL
-                    )
-        
-        tsserver_executable_path = os.path.join(tsserver_ls_dir, "node_modules", ".bin", "typescript-language-server")
+            # Install typescript and typescript-language-server if not already installed
+            if not os.path.exists(tsserver_ls_dir):
+                os.makedirs(tsserver_ls_dir, exist_ok=True)
+                for dependency in runtime_dependencies:
+                    # Windows doesn't support the 'user' parameter and doesn't have pwd module
+                    if PlatformUtils.get_platform_id().value.startswith("win"):
+                        subprocess.run(
+                            dependency["command"], 
+                            shell=True, 
+                            check=True, 
+                            cwd=tsserver_ls_dir,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL
+                        )
+                    else:
+                        # On Unix-like systems, run as non-root user
+                        user = pwd.getpwuid(os.getuid()).pw_name
+                        subprocess.run(
+                            dependency["command"], 
+                            shell=True, 
+                            check=True, 
+                            user=user, 
+                            cwd=tsserver_ls_dir,
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL
+                        )
+            tsserver_executable_path = os.path.join(tsserver_ls_dir, "node_modules", ".bin", "typescript-language-server")
+
         assert os.path.exists(tsserver_executable_path), "typescript-language-server executable not found. Please install typescript-language-server and try again."
         return f"{tsserver_executable_path} --stdio"
 
